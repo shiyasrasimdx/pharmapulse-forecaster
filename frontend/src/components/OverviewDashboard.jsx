@@ -104,94 +104,42 @@ export default function OverviewDashboard({ overview, products, setActiveTab, se
 
       </div>
 
-      {/* Main Content Grid: Top Demand Chart + ABC/XYZ Matrix */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
-        
-        {/* Top Demand Medicines Chart */}
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Top Highest Demand Medicines</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Forecasted unit requirement for next {overview.forecast_days} days</p>
-            </div>
-          </div>
-
-          <div style={{ width: '100%', height: '320px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topDemandProducts} margin={{ top: 10, right: 10, left: 10, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis
-                  dataKey="name"
-                  stroke="#94A3B8"
-                  fontSize={11}
-                  interval={0}
-                  angle={-25}
-                  textAnchor="end"
-                />
-                <YAxis stroke="#94A3B8" fontSize={11} />
-                <Tooltip
-                  contentStyle={{ background: '#0F172A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F8FAFC' }}
-                  formatter={(val, name, item) => [`${val} units (₹${item.payload.cost.toLocaleString()})`, 'Forecast Qty']}
-                  labelFormatter={(label, items) => items[0]?.payload?.fullName || label}
-                />
-                <Bar dataKey="qty" radius={[6, 6, 0, 0]}>
-                  {topDemandProducts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#06B6D4' : '#8B5CF6'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* ABC-XYZ Matrix Summary Grid */}
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Full Width Top Demand Medicines Chart */}
+      <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>ABC / XYZ Classification Matrix</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              ABC = Revenue Impact (A=80%, B=15%, C=5%) | XYZ = Demand Predictability (X=Steady, Y=Variable, Z=Erratic)
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', height: '300px' }}>
-            {['AX', 'AY', 'AZ', 'BX', 'BY', 'BZ', 'CX', 'CY', 'CZ'].map(code => {
-              const count = matrixCounts[code] || 0;
-              const abcClass = code.charAt(0);
-              const xyzClass = code.charAt(1);
-              return (
-                <div
-                  key={code}
-                  className="glass-panel glass-card-interactive"
-                  onClick={() => {
-                    if (setActiveTab) setActiveTab('procurement');
-                  }}
-                  style={{
-                    padding: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: code === 'AX' ? 'rgba(6, 182, 212, 0.15)' : code.startsWith('A') ? 'rgba(139, 92, 246, 0.12)' : 'rgba(15, 23, 42, 0.4)',
-                    border: code === 'AX' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid var(--border-glass)',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: code.startsWith('A') ? '#38BDF8' : '#CBD5E1' }}>
-                    Category {code}
-                  </span>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 800, margin: '4px 0' }}>
-                    {count}
-                  </span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    {code.endsWith('X') ? 'Predictable' : code.endsWith('Y') ? 'Variable' : 'Erratic'}
-                  </span>
-                </div>
-              );
-            })}
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Top Highest Demand Medicines</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Forecasted unit requirement for next {overview.forecast_days} days</p>
           </div>
         </div>
+
+        <div style={{ width: '100%', height: '360px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={topDemandProducts} margin={{ top: 10, right: 10, left: 10, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis
+                dataKey="name"
+                stroke="#94A3B8"
+                fontSize={11}
+                interval={0}
+                angle={-25}
+                textAnchor="end"
+              />
+              <YAxis stroke="#94A3B8" fontSize={11} />
+              <Tooltip
+                contentStyle={{ background: '#0F172A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F8FAFC' }}
+                formatter={(val, name, item) => [`${val} units (₹${item.payload.cost.toLocaleString()})`, 'Forecast Qty']}
+                labelFormatter={(label, items) => items[0]?.payload?.fullName || label}
+              />
+              <Bar dataKey="qty" radius={[6, 6, 0, 0]}>
+                {topDemandProducts.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#06B6D4' : '#8B5CF6'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       </div>
 

@@ -231,75 +231,37 @@ with tab1:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Grid: Plotly Top Demand Chart + ABC/XYZ Matrix Grid
-    col_chart, col_matrix = st.columns([3, 2])
-
-    with col_chart:
-        st.markdown("""
-        <div class="glass-card">
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px;">Top Highest Demand Medicines</h3>
-            <p style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 16px;">Forecasted unit requirement for next 30 days</p>
-        </div>
-        """, unsafe_allow_html=True)
+    # Full Width Plotly Top Demand Chart
+    st.markdown("""
+    <div class="glass-card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px;">Top Highest Demand Medicines</h3>
+        <p style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 16px;">Forecasted unit requirement for next 30 days</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if products_data:
+        df_p = pd.DataFrame(products_data).sort_values('forecast_qty', ascending=False).head(10)
         
-        if products_data:
-            df_p = pd.DataFrame(products_data).sort_values('forecast_qty', ascending=False).head(8)
-            
-            fig = px.bar(
-                df_p,
-                x='forecast_qty',
-                y='product',
-                orientation='h',
-                color='forecast_qty',
-                color_continuous_scale=['#06B6D4', '#8B5CF6'],
-                text='forecast_qty'
-            )
-            fig.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#94A3B8', family='Plus Jakarta Sans'),
-                xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title='Forecast Units'),
-                yaxis=dict(autorange='reversed', title=''),
-                coloraxis_showscale=False,
-                margin=dict(l=10, r=10, t=10, b=10),
-                height=320
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-    with col_matrix:
-        st.markdown("""
-        <div class="glass-card">
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px;">ABC / XYZ Pareto Matrix</h3>
-            <p style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 16px;">ABC = Revenue | XYZ = Demand Predictability</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        abc_xyz_df = forecaster.get_abc_xyz_analysis()
-        if not abc_xyz_df.empty:
-            abc_types = ['A', 'B', 'C']
-            xyz_types = ['X', 'Y', 'Z']
-            matrix_counts = {}
-            for a in abc_types:
-                for x in xyz_types:
-                    matrix_counts[f"{a}{x}"] = len(abc_xyz_df[(abc_xyz_df['ABC'] == a) & (abc_xyz_df['XYZ'] == x)])
-
-            # Render 3x3 Grid
-            m_cols = st.columns(3)
-            for i, code in enumerate(['AX', 'AY', 'AZ', 'BX', 'BY', 'BZ', 'CX', 'CY', 'CZ']):
-                col_idx = i % 3
-                cnt = matrix_counts.get(code, 0)
-                is_a = code.startswith('A')
-                bg = 'rgba(6, 182, 212, 0.15)' if code == 'AX' else 'rgba(139, 92, 246, 0.12)' if is_a else 'rgba(15, 23, 42, 0.4)'
-                border = 'rgba(6, 182, 212, 0.5)' if code == 'AX' else 'rgba(255,255,255,0.08)'
-                
-                with m_cols[col_idx]:
-                    st.markdown(f"""
-                    <div style="background: {bg}; border: 1px solid {border}; padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 10px;">
-                        <span style="font-weight: 800; font-size: 0.9rem; color: {'#38BDF8' if is_a else '#CBD5E1'};">Category {code}</span>
-                        <h3 style="margin: 4px 0; font-weight: 800; font-size: 1.4rem; color: #F8FAFC;">{cnt}</h3>
-                        <span style="font-size: 0.7rem; color: #94A3B8;">{'Predictable' if code.endswith('X') else 'Variable' if code.endswith('Y') else 'Erratic'}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
+        fig = px.bar(
+            df_p,
+            x='forecast_qty',
+            y='product',
+            orientation='h',
+            color='forecast_qty',
+            color_continuous_scale=['#06B6D4', '#8B5CF6'],
+            text='forecast_qty'
+        )
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#94A3B8', family='Plus Jakarta Sans'),
+            xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title='Forecast Units'),
+            yaxis=dict(autorange='reversed', title=''),
+            coloraxis_showscale=False,
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=380
+        )
+        st.plotly_chart(fig, width="stretch")
 
 # --- TAB 2: MEDICINE DEEP-DIVE ---
 with tab2:
