@@ -349,39 +349,21 @@ with tab2:
 
             st.plotly_chart(fig_ts, use_container_width=True)
 
-            # Model Breakdown & Accuracy Cards
-            mc1, mc2 = st.columns(2)
-            with mc1:
-                st.markdown("""
-                <div class="glass-card">
-                    <h4 style="font-weight:700; color:#38BDF8; margin-bottom:12px;">🤖 Multi-Model Forecast Breakdown</h4>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Ensemble Blend (Final)</span><strong style="color:#34D399;">{} units/day</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Holt-Winters / EWMA</span><strong>{} units/day</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Simple Moving Avg (SMA)</span><strong>{} units/day</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0;"><span>Linear Trend Trajectory</span><strong>{} units/day</strong></div>
-                </div>
-                """.format(
-                    fc['models']['ensemble_daily'],
-                    fc['models']['ewma_daily'],
-                    fc['models']['sma_daily'],
-                    fc['models']['trend_daily']
-                ), unsafe_allow_html=True)
-
-            with mc2:
-                st.markdown("""
-                <div class="glass-card">
-                    <h4 style="font-weight:700; color:#C084FC; margin-bottom:12px;">🎯 Backtest Accuracy Metrics</h4>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Accuracy Score</span><strong style="color:#34D399;">{}%</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>WAPE Error</span><strong>{}%</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Mean Abs Error (MAE)</span><strong>{}</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0;"><span>Root Mean Sq Error (RMSE)</span><strong>{}</strong></div>
-                </div>
-                """.format(
-                    fc['metrics']['accuracy_score'],
-                    fc['metrics']['wape_pct'],
-                    fc['metrics']['mae'],
-                    fc['metrics']['rmse']
-                ), unsafe_allow_html=True)
+            # Multi-Model Forecast Breakdown Card
+            st.markdown("""
+            <div class="glass-card">
+                <h4 style="font-weight:700; color:#38BDF8; margin-bottom:12px;">🤖 Multi-Model Forecast Breakdown</h4>
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Ensemble Blend (Final)</span><strong style="color:#34D399;">{} units/day</strong></div>
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Holt-Winters / EWMA</span><strong>{} units/day</strong></div>
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>Simple Moving Avg (SMA)</span><strong>{} units/day</strong></div>
+                <div style="display:flex; justify-content:space-between; padding:8px 0;"><span>Linear Trend Trajectory</span><strong>{} units/day</strong></div>
+            </div>
+            """.format(
+                fc['models']['ensemble_daily'],
+                fc['models']['ewma_daily'],
+                fc['models']['sma_daily'],
+                fc['models']['trend_daily']
+            ), unsafe_allow_html=True)
 
 # --- TAB 3: PROCUREMENT PLANNER ---
 with tab3:

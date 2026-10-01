@@ -205,34 +205,7 @@ export default function MedicineDeepDive({ products, leadTime, serviceLevel, for
               </div>
             </div>
 
-            {/* Model Accuracy Metrics Card */}
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CheckCircle size={18} color="#10B981" /> Backtest Accuracy Metrics
-              </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ padding: '12px', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Accuracy Score</span>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#34D399' }}>{productDetail.metrics?.accuracy_score}%</h4>
-                </div>
-
-                <div style={{ padding: '12px', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>WAPE Error</span>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#38BDF8' }}>{productDetail.metrics?.wape_pct}%</h4>
-                </div>
-
-                <div style={{ padding: '12px', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>MAE Error</span>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{productDetail.metrics?.mae}</h4>
-                </div>
-
-                <div style={{ padding: '12px', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>RMSE Error</span>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{productDetail.metrics?.rmse}</h4>
-                </div>
-              </div>
-            </div>
 
             {/* Inventory Stock Optimization Parameters */}
             <div className="glass-panel" style={{ padding: '24px' }}>
