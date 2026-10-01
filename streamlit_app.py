@@ -111,23 +111,44 @@ st.markdown("""
     a[href*="github.com"] {display: none !important; visibility: hidden !important;}
     #vg-tooltip-element {display: none !important;}
     
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: rgba(15, 23, 42, 0.6);
-        padding: 6px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Radio Tabs Navigation Styling */
+    div[data-testid="stRadio"] {
+        margin-bottom: 24px !important;
     }
-    .stTabs [data-baseweb="tab"] {
-        height: 44px;
-        border-radius: 8px;
-        font-weight: 600;
-        color: #94A3B8;
+    div[data-testid="stRadio"] > div {
+        gap: 8px !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        padding: 6px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
     }
-    .stTabs [aria-selected="true"] {
+    div[data-testid="stRadio"] label {
+        padding: 10px 20px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        color: #94A3B8 !important;
+        cursor: pointer !important;
+        background: transparent !important;
+        border: none !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stRadio"] label:hover {
+        color: #F8FAFC !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+    div[data-testid="stRadio"] label:has(input:checked), div[data-testid="stRadio"] label[data-checked="true"] {
         background: linear-gradient(135deg, #06B6D4 0%, #0D9488 100%) !important;
         color: #FFFFFF !important;
+        box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3) !important;
+    }
+    div[data-testid="stRadio"] input[type="radio"] {
+        display: none !important;
+    }
+    div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -285,44 +306,32 @@ with st.expander("📥 **Upload Custom Order File(s) (.xlsx, .csv)** - Click her
             else:
                 st.warning("Please select file(s) first.")
 
-# Tab Layout
-tab1, tab_up, tab2, tab3, tab4 = st.tabs(["📊 Executive Overview", "📥 Upload Order Files", "📈 Medicine Deep-Dive", "🛒 Procurement Planner", "⚡ What-If Simulator"])
+# Navigation Tab Bar
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = "📊 Executive Overview"
 
-# --- TAB: UPLOAD ORDER FILES ---
-with tab_up:
-    st.markdown("### 📥 Upload Pharmacy Order Files & Set as Active Prediction Input")
-    st.info(f"📌 **Current Active Input Source:** {st.session_state.active_dataset_label} ({len(forecaster.clean_df):,} records)")
-    
-    tab_files = st.file_uploader(
-        "Choose Order File(s) (.xlsx, .csv) from Medical Shops:",
-        type=["xlsx", "xls", "csv"],
-        accept_multiple_files=True,
-        key="tab_main_uploader"
-    )
-    
-    col_t1, col_t2 = st.columns([1, 4])
-    with col_t1:
-        if st.button("🚀 Upload & Calculate Predictions", key="btn_apply_tab", type="primary"):
-            if tab_files:
-                try:
-                    new_f = MedicineForecaster()
-                    new_f.load_data(tab_files)
-                    st.session_state.active_forecaster = new_f
-                    names_str = ", ".join([f.name for f in tab_files])
-                    st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
-                    st.session_state.active_tab = "📊 Executive Overview"
-                    st.session_state.show_upload_success_alert = True
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Failed to parse order file: {e}")
-            else:
-                st.warning("Please select file(s) first.")
+tab_options = ["📊 Executive Overview", "📥 Upload Order Files", "📈 Medicine Deep-Dive", "🛒 Procurement Planner", "⚡ What-If Simulator"]
+if st.session_state.active_tab not in tab_options:
+    st.session_state.active_tab = "📊 Executive Overview"
+
+current_tab_idx = tab_options.index(st.session_state.active_tab)
+
+active_nav = st.radio(
+    "Navigation Options",
+    options=tab_options,
+    index=current_tab_idx,
+    horizontal=True,
+    key="dashboard_radio_nav_switcher",
+    label_visibility="collapsed"
+)
+st.session_state.active_tab = active_nav
 
 # --- TAB 1: EXECUTIVE OVERVIEW ---
-with tab1:
+if active_nav == "📊 Executive Overview":
     if st.session_state.get('show_upload_success_alert', False):
         st.success(f"🎉 **Active Dataset Input Updated!** Loaded **{len(forecaster.clean_df):,}** order records across **{forecaster.clean_df['Product'].nunique()}** medicines. All executive metrics, charts, and forecasts below are now recalculated for your file!")
         st.session_state.show_upload_success_alert = False
+
     # 4 Key Glass Metric Cards
     c1, c2, c3, c4 = st.columns(4)
     
@@ -396,8 +405,38 @@ with tab1:
         )
         st.plotly_chart(fig, width="stretch")
 
-# --- TAB 2: MEDICINE DEEP-DIVE ---
-with tab2:
+# --- TAB 2: UPLOAD ORDER FILES ---
+elif active_nav == "📥 Upload Order Files":
+    st.markdown("### 📥 Upload Pharmacy Order Files & Set as Active Prediction Input")
+    st.info(f"📌 **Current Active Input Source:** {st.session_state.active_dataset_label} ({len(forecaster.clean_df):,} records)")
+    
+    tab_files = st.file_uploader(
+        "Choose Order File(s) (.xlsx, .csv) from Medical Shops:",
+        type=["xlsx", "xls", "csv"],
+        accept_multiple_files=True,
+        key="tab_main_uploader"
+    )
+    
+    col_t1, col_t2 = st.columns([1, 4])
+    with col_t1:
+        if st.button("🚀 Upload & Calculate Predictions", key="btn_apply_tab", type="primary"):
+            if tab_files:
+                try:
+                    new_f = MedicineForecaster()
+                    new_f.load_data(tab_files)
+                    st.session_state.active_forecaster = new_f
+                    names_str = ", ".join([f.name for f in tab_files])
+                    st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
+                    st.session_state.active_tab = "📊 Executive Overview"
+                    st.session_state.show_upload_success_alert = True
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to parse order file: {e}")
+            else:
+                st.warning("Please select file(s) first.")
+
+# --- TAB 3: MEDICINE DEEP-DIVE ---
+elif active_nav == "📈 Medicine Deep-Dive":
     st.markdown("""
     <div class="glass-card">
         <h3 style="font-size: 1.1rem; font-weight: 700;">Single Medicine Time-Series Forecast Visualizer</h3>
@@ -498,8 +537,8 @@ with tab2:
                 fc['models']['trend_daily']
             ), unsafe_allow_html=True)
 
-# --- TAB 3: PROCUREMENT PLANNER ---
-with tab3:
+# --- TAB 4: PROCUREMENT PLANNER ---
+elif active_nav == "🛒 Procurement Planner":
     st.markdown("""
     <div class="glass-card">
         <h3 style="font-size: 1.1rem; font-weight: 700;">Stock Procurement Planner & Excel Export</h3>
@@ -555,8 +594,8 @@ with tab3:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-# --- TAB 4: WHAT-IF SIMULATOR ---
-with tab4:
+# --- TAB 5: WHAT-IF SIMULATOR ---
+elif active_nav == "⚡ What-If Simulator":
     st.markdown("""
     <div class="glass-card">
         <h3 style="font-size: 1.1rem; font-weight: 700;">⚡ "What-If" Supply Chain Stress Simulator</h3>
