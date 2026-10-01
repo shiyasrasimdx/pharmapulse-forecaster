@@ -12,15 +12,20 @@ from forecaster import MedicineForecaster
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-# Initialize global forecaster with default dataset if present
-DEFAULT_DATASET = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SHAFI HAJI JAN2026TOAUG2026(1).xlsx')
-forecaster_instance = MedicineForecaster()
+# Initialize global forecaster with default datasets if present
+DEFAULT_FILE1 = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SHAFI HAJI JAN2026TOAUG2026(1).xlsx')
+DEFAULT_FILE2 = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dataset', 'UNITED_AND_FATHIMA_MEDICALS_2026.csv')
 
-if os.path.exists(DEFAULT_DATASET):
-    print(f"Pre-loading default dataset: {DEFAULT_DATASET}")
-    forecaster_instance.load_data(DEFAULT_DATASET)
+forecaster_instance = MedicineForecaster()
+default_list = []
+if os.path.exists(DEFAULT_FILE1): default_list.append(DEFAULT_FILE1)
+if os.path.exists(DEFAULT_FILE2): default_list.append(DEFAULT_FILE2)
+
+if default_list:
+    print(f"Pre-loading default master datasets ({len(default_list)} files)")
+    forecaster_instance.load_data(default_list)
 else:
-    print("Warning: Default dataset not found. Awaiting user file upload.")
+    print("Warning: Default dataset files not found. Awaiting user file upload.")
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

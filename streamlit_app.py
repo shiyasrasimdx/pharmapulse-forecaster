@@ -135,9 +135,13 @@ st.markdown("""
 @st.cache_resource
 def load_forecaster_engine():
     forecaster = MedicineForecaster()
-    dataset_path = os.path.join(os.path.dirname(__file__), 'SHAFI HAJI JAN2026TOAUG2026(1).xlsx')
-    if os.path.exists(dataset_path):
-        forecaster.load_data(dataset_path)
+    default_files = []
+    path1 = os.path.join(os.path.dirname(__file__), 'SHAFI HAJI JAN2026TOAUG2026(1).xlsx')
+    path2 = os.path.join(os.path.dirname(__file__), 'dataset', 'UNITED_AND_FATHIMA_MEDICALS_2026.csv')
+    if os.path.exists(path1): default_files.append(path1)
+    if os.path.exists(path2): default_files.append(path2)
+    if default_files:
+        forecaster.load_data(default_files)
     return forecaster
 
 forecaster = load_forecaster_engine()
@@ -165,15 +169,25 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Custom Dataset Upload (Supports Multiple Medical Shop Order Files)
-uploaded_files = st.sidebar.file_uploader("Upload Medical Shop Datasets (.xlsx, .csv)", type=["xlsx", "xls", "csv"], accept_multiple_files=True)
+# Custom Order File Ingestion & Input Selection
+st.sidebar.markdown("### 📥 Order File Input Source")
+uploaded_files = st.sidebar.file_uploader(
+    "Upload Order Excel / CSV File(s)",
+    type=["xlsx", "xls", "csv"],
+    accept_multiple_files=True,
+    help="Upload medical shop order registers (.xlsx, .csv) to use as forecasting input dataset."
+)
+
 if uploaded_files:
     try:
         forecaster = MedicineForecaster()
         forecaster.load_data(uploaded_files)
-        st.sidebar.success(f"✅ Loaded & aggregated {len(uploaded_files)} shop datasets ({len(forecaster.clean_df):,} total sales records)!")
+        st.sidebar.success(f"✅ Active Input: {len(uploaded_files)} Uploaded Order File(s) ({len(forecaster.clean_df):,} records)")
     except Exception as e:
-        st.sidebar.error(f"Upload error: {e}")
+        st.sidebar.error(f"Error parsing uploaded order file: {e}")
+else:
+    active_shops_count = forecaster.clean_df['Shop_ID'].nunique() if forecaster.clean_df is not None and 'Shop_ID' in forecaster.clean_df.columns else 1
+    st.sidebar.info(f"📊 Active Input: Preloaded Order Registers ({len(forecaster.clean_df):,} records across {active_shops_count} shops)")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚙️ Inventory Parameters")
@@ -191,6 +205,7 @@ overview = report['overview']
 products_data = report['products']
 
 # Header Banner
+rec_count = len(forecaster.clean_df) if forecaster.clean_df is not None else 0
 st.markdown(f"""
 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; gap: 16px;">
     <div>
@@ -199,13 +214,19 @@ st.markdown(f"""
             AI-powered pharmaceutical purchasing forecast & stock reorder optimization engine
         </p>
     </div>
-    <div style="background: rgba(18, 26, 43, 0.85); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 14px; padding: 10px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px);">
-        <div style="background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%); border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: white; box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);">
-            🏥
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 10px 16px; color: #34D399; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <span>📥 Active Input:</span>
+            <span style="color: #F8FAFC;">{rec_count:,} Order Records</span>
         </div>
-        <div>
-            <div style="font-size: 0.88rem; font-weight: 800; color: #38BDF8; letter-spacing: 0.4px;">SHAFI HAJI MEDICALS</div>
-            <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 600;">Malabar Drug Lines • Client Portal</div>
+        <div style="background: rgba(18, 26, 43, 0.85); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 14px; padding: 10px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px);">
+            <div style="background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%); border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: white; box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);">
+                🏥
+            </div>
+            <div>
+                <div style="font-size: 0.88rem; font-weight: 800; color: #38BDF8; letter-spacing: 0.4px;">SHAFI HAJI MEDICALS</div>
+                <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 600;">Malabar Drug Lines • Client Portal</div>
+            </div>
         </div>
     </div>
 </div>
