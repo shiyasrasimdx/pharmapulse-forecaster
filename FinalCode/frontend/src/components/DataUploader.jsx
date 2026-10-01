@@ -3,22 +3,22 @@ import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, FileText } from 'lu
 import axios from 'axios';
 
 export default function DataUploader({ onUploadSuccess }) {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(Array.from(e.target.files));
       setMessage(null);
       setError(null);
     }
   };
 
   const handleUpload = () => {
-    if (!file) {
-      setError("Please select a file to upload.");
+    if (!files || files.length === 0) {
+      setError("Please select at least one order file to upload.");
       return;
     }
 
@@ -27,7 +27,9 @@ export default function DataUploader({ onUploadSuccess }) {
     setError(null);
 
     const formData = new FormData();
-    formData.append('file', file);
+    files.forEach(file => {
+      formData.append('files', file);
+    });
 
     axios.post('http://localhost:5000/api/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -39,7 +41,7 @@ export default function DataUploader({ onUploadSuccess }) {
     })
     .catch(err => {
       setUploading(false);
-      setError(err.response?.data?.error || "Failed to parse file. Please verify column headers.");
+      setError(err.response?.data?.error || "Failed to parse files. Please verify column headers.");
     });
   };
 
@@ -49,10 +51,10 @@ export default function DataUploader({ onUploadSuccess }) {
       {/* Header */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Upload size={24} color="#06B6D4" /> Upload Custom Purchasing Dataset
+          <Upload size={24} color="#06B6D4" /> Upload Custom Order & Sales Datasets
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Upload your pharmacy or hospital purchasing history file (.xlsx, .csv). The AI engine automatically cleans, detects columns, and updates forecasts.
+          Upload single or multiple pharmacy order history files (.xlsx, .csv). The AI engine automatically cleans, aligns product names across shops, and updates seasonal demand forecasts.
         </p>
       </div>
 
@@ -61,28 +63,31 @@ export default function DataUploader({ onUploadSuccess }) {
         <FileSpreadsheet size={48} color="#8B5CF6" style={{ margin: '0 auto 16px auto' }} />
         
         <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '8px' }}>
-          {file ? file.name : "Drag and drop your Excel / CSV file here"}
+          {files.length > 0 
+            ? `Selected ${files.length} File(s): ${files.map(f => f.name).join(', ')}`
+            : "Drag and drop your Excel / CSV order files here"}
         </h3>
         
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
-          Supports .xlsx, .xls, and .csv formats
+          Supports uploading multiple .xlsx, .xls, and .csv files from different medical shops simultaneously
         </p>
 
         <input
           type="file"
           id="dataset-upload-input"
           accept=".xlsx,.xls,.csv"
+          multiple
           onChange={handleFileChange}
           style={{ display: 'none' }}
         />
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
           <label htmlFor="dataset-upload-input" className="btn-secondary" style={{ cursor: 'pointer' }}>
-            Choose File
+            Choose Files
           </label>
 
-          <button className="btn-primary" onClick={handleUpload} disabled={!file || uploading}>
-            {uploading ? 'Processing Dataset...' : 'Upload & Analyze Data'}
+          <button className="btn-primary" onClick={handleUpload} disabled={files.length === 0 || uploading}>
+            {uploading ? 'Processing Datasets...' : 'Upload & Aggregate Data'}
           </button>
         </div>
 

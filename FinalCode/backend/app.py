@@ -108,30 +108,20 @@ def get_product_detail(product_name):
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
+    uploaded_files = request.files.getlist('files') or request.files.getlist('file')
+    if not uploaded_files or (len(uploaded_files) == 1 and uploaded_files[0].filename == ''):
         return jsonify({"error": "No file uploaded in request."}), 400
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "Selected file is empty."}), 400
-
     try:
-        if file.filename.endswith('.csv'):
-            df = pd.read_csv(file)
-        else:
-            xl = pd.ExcelFile(file)
-            sheet_name = 'Sheet2' if 'Sheet2' in xl.sheet_names else xl.sheet_names[0]
-            df = xl.parse(sheet_name)
-
-        forecaster_instance.load_data(df)
+        forecaster_instance.load_data(uploaded_files)
         report = forecaster_instance.generate_full_inventory_report()
 
         return jsonify({
-            "message": f"Successfully loaded dataset with {len(forecaster_instance.clean_df)} records.",
+            "message": f"Successfully loaded & aggregated {len(uploaded_files)} order file(s) with {len(forecaster_instance.clean_df):,} transaction records across {forecaster_instance.clean_df['Product'].nunique()} medicines.",
             "overview": report['overview']
         })
     except Exception as e:
-        return jsonify({"error": f"Failed to parse dataset file: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to parse dataset file(s): {str(e)}"}), 500
 
 @app.route('/api/simulate', methods=['POST'])
 def run_simulation():
