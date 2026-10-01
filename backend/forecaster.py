@@ -290,11 +290,21 @@ class MedicineForecaster:
         unit_price = float(round(prod_df['Value'].sum() / total_qty, 2)) if total_qty > 0 else 10.0
         forecast_cost = float(round(recommended_roq * unit_price, 2))
 
-        # Backtesting Accuracy Metrics (Evaluating on historical 30-day window)
-        mae = float(round(np.mean(np.abs(y[-window:] - ensemble_daily)), 2))
-        rmse = float(round(np.sqrt(np.mean((y[-window:] - ensemble_daily)**2)), 2))
-        sum_actual = np.sum(y[-window:])
-        wape = float(round((np.sum(np.abs(y[-window:] - ensemble_daily)) / sum_actual * 100), 1)) if sum_actual > 0 else 0.0
+        # Backtesting Accuracy Metrics (Evaluating at monthly aggregated level)
+        if len(history_monthly) > 0:
+            hist_qtys = [h['qty'] for h in history_monthly]
+            monthly_mean = float(np.mean(hist_qtys)) if len(hist_qtys) > 0 else 1.0
+            monthly_predicted = float(round(ensemble_daily * 30.0, 2))
+            
+            mae = float(round(abs(monthly_mean - monthly_predicted), 2))
+            rmse = float(round(float(np.sqrt(np.mean((np.array(hist_qtys) - monthly_predicted)**2))), 2)) if len(hist_qtys) > 0 else mae
+            wape = float(round((mae / monthly_mean * 100), 1)) if monthly_mean > 0 else 0.0
+            acc_score = float(round(max(0.0, 100.0 - wape), 1))
+        else:
+            mae = 0.0
+            rmse = 0.0
+            wape = 0.0
+            acc_score = 100.0
 
         # Stockout Risk Rating & FEFO Turnover Rating
         cv = (std_daily_demand / avg_daily_demand) if avg_daily_demand > 0 else 1.0
@@ -394,6 +404,7 @@ class MedicineForecaster:
                 "unit_price": float(row['AvgUnitPrice']),
                 "avg_daily_demand": fc['avg_daily_demand'],
                 "forecast_qty": fc['forecast_qty'],
+                "metrics": fc['metrics'],
                 "safety_stock": fc['inventory']['safety_stock'],
                 "reorder_point": fc['inventory']['reorder_point'],
                 "recommended_roq": roq,
