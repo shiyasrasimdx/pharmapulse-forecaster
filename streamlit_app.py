@@ -144,7 +144,14 @@ def load_forecaster_engine():
         forecaster.load_data(default_files)
     return forecaster
 
-forecaster = load_forecaster_engine()
+# Session State Persistence for Active Dataset & Forecaster Engine
+if 'active_forecaster' not in st.session_state:
+    st.session_state.active_forecaster = load_forecaster_engine()
+
+if 'active_dataset_label' not in st.session_state:
+    st.session_state.active_dataset_label = "Master Preloaded Orders (Shafi Haji + United + Fathima)"
+
+forecaster = st.session_state.active_forecaster
 
 # Sidebar Setup
 st.sidebar.markdown("""
@@ -169,25 +176,42 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Custom Order File Ingestion & Input Selection
+# Sidebar Order File Uploader with Explicit Upload Button
 st.sidebar.markdown("### 📥 Order File Input Source")
-uploaded_files = st.sidebar.file_uploader(
-    "Upload Order Excel / CSV File(s)",
+sidebar_files = st.sidebar.file_uploader(
+    "1. Select Order File(s) (.xlsx, .csv)",
     type=["xlsx", "xls", "csv"],
     accept_multiple_files=True,
+    key="sb_file_uploader",
     help="Upload medical shop order registers (.xlsx, .csv) to use as forecasting input dataset."
 )
 
-if uploaded_files:
-    try:
-        forecaster = MedicineForecaster()
-        forecaster.load_data(uploaded_files)
-        st.sidebar.success(f"✅ Active Input: {len(uploaded_files)} Uploaded Order File(s) ({len(forecaster.clean_df):,} records)")
-    except Exception as e:
-        st.sidebar.error(f"Error parsing uploaded order file: {e}")
-else:
-    active_shops_count = forecaster.clean_df['Shop_ID'].nunique() if forecaster.clean_df is not None and 'Shop_ID' in forecaster.clean_df.columns else 1
-    st.sidebar.info(f"📊 Active Input: Preloaded Order Registers ({len(forecaster.clean_df):,} records across {active_shops_count} shops)")
+col_sb1, col_sb2 = st.sidebar.columns([1, 1])
+with col_sb1:
+    if st.button("🚀 Upload File", key="btn_apply_sb", use_container_width=True, type="primary"):
+        if sidebar_files:
+            try:
+                new_f = MedicineForecaster()
+                new_f.load_data(sidebar_files)
+                st.session_state.active_forecaster = new_f
+                names_str = ", ".join([f.name for f in sidebar_files])
+                st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
+                st.sidebar.success(f"✅ Ingested {len(new_f.clean_df):,} records!")
+                st.rerun()
+            except Exception as e:
+                st.sidebar.error(f"Error parsing order file: {e}")
+        else:
+            st.sidebar.warning("Select file first")
+
+with col_sb2:
+    if st.button("🔄 Reset", key="btn_reset_sb", use_container_width=True):
+        st.session_state.active_forecaster = load_forecaster_engine()
+        st.session_state.active_dataset_label = "Preloaded Master Orders (Shafi Haji + United + Fathima)"
+        st.sidebar.info("Reset to default master dataset!")
+        st.rerun()
+
+active_shops_count = forecaster.clean_df['Shop_ID'].nunique() if forecaster.clean_df is not None and 'Shop_ID' in forecaster.clean_df.columns else 1
+st.sidebar.caption(f"📌 **Active Input:** {st.session_state.active_dataset_label} ({len(forecaster.clean_df):,} records)")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚙️ Inventory Parameters")
@@ -232,49 +256,65 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Main Page Order File Upload Box (Always visible on main dashboard)
-with st.expander("📥 **Upload Custom Order File(s) (.xlsx, .csv)** - Click here to upload & switch active order dataset", expanded=False):
-    main_files = st.file_uploader(
-        "Select Order File(s) from Medical Shops",
-        type=["xlsx", "xls", "csv"],
-        accept_multiple_files=True,
-        key="top_main_uploader",
-        help="Upload order registers from retail medical shops (.xlsx, .csv) to use as forecasting input dataset."
-    )
-    if main_files:
-        try:
-            forecaster = MedicineForecaster()
-            forecaster.load_data(main_files)
-            st.success(f"✅ Active Input Switched: Loaded {len(main_files)} Order File(s) ({len(forecaster.clean_df):,} records)!")
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error parsing uploaded order file: {e}")
+# Main Page Order File Upload Box with Explicit Upload Button
+with st.expander("📥 **Upload Custom Order File(s) (.xlsx, .csv)** - Click here to upload & switch active dataset input", expanded=False):
+    col_u1, col_u2 = st.columns([3, 1])
+    with col_u1:
+        top_files = st.file_uploader(
+            "Select Order File(s) from Medical Shops",
+            type=["xlsx", "xls", "csv"],
+            accept_multiple_files=True,
+            key="top_main_uploader",
+            help="Upload order registers from retail medical shops (.xlsx, .csv) to use as forecasting input dataset."
+        )
+    with col_u2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 Upload & Use as Input", key="btn_apply_top", type="primary", use_container_width=True):
+            if top_files:
+                try:
+                    new_f = MedicineForecaster()
+                    new_f.load_data(top_files)
+                    st.session_state.active_forecaster = new_f
+                    names_str = ", ".join([f.name for f in top_files])
+                    st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
+                    st.success(f"🎉 Active Input Dataset Updated! Loaded {len(new_f.clean_df):,} records across {new_f.clean_df['Product'].nunique()} medicines. All predictions updated!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error parsing uploaded order file: {e}")
+            else:
+                st.warning("Please select file(s) first.")
 
 # Tab Layout
 tab1, tab_up, tab2, tab3, tab4 = st.tabs(["📊 Executive Overview", "📥 Upload Order Files", "📈 Medicine Deep-Dive", "🛒 Procurement Planner", "⚡ What-If Simulator"])
 
 # --- TAB: UPLOAD ORDER FILES ---
 with tab_up:
-    st.markdown("### 📥 Upload Pharmacy / Hospital Order Registers")
-    st.markdown("""
-    Upload single or multiple order history files (`.xlsx`, `.csv`) directly into the AI forecasting engine.
-    The system automatically extracts transaction dates, medicine descriptions, quantities, and sales values.
-    """)
+    st.markdown("### 📥 Upload Pharmacy Order Files & Set as Active Prediction Input")
+    st.info(f"📌 **Current Active Input Source:** {st.session_state.active_dataset_label} ({len(forecaster.clean_df):,} records)")
     
-    upload_files_tab = st.file_uploader(
-        "Drag and drop your Excel / CSV order registers here:",
+    tab_files = st.file_uploader(
+        "Choose Order File(s) (.xlsx, .csv) from Medical Shops:",
         type=["xlsx", "xls", "csv"],
         accept_multiple_files=True,
         key="tab_main_uploader"
     )
-    if upload_files_tab:
-        try:
-            forecaster = MedicineForecaster()
-            forecaster.load_data(upload_files_tab)
-            st.success(f"🎉 Successfully ingested {len(upload_files_tab)} order file(s) with {len(forecaster.clean_df):,} transaction records across {forecaster.clean_df['Product'].nunique()} medicines!")
-            st.rerun()
-        except Exception as e:
-            st.error(f"Failed to parse order file: {e}")
+    
+    col_t1, col_t2 = st.columns([1, 4])
+    with col_t1:
+        if st.button("🚀 Upload & Calculate Predictions", key="btn_apply_tab", type="primary"):
+            if tab_files:
+                try:
+                    new_f = MedicineForecaster()
+                    new_f.load_data(tab_files)
+                    st.session_state.active_forecaster = new_f
+                    names_str = ", ".join([f.name for f in tab_files])
+                    st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
+                    st.success(f"🎉 Active Input Dataset Updated! Loaded {len(new_f.clean_df):,} records across {new_f.clean_df['Product'].nunique()} medicines. All predictions updated!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to parse order file: {e}")
+            else:
+                st.warning("Please select file(s) first.")
 
 # --- TAB 1: EXECUTIVE OVERVIEW ---
 with tab1:
