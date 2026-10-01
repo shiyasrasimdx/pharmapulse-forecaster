@@ -277,7 +277,8 @@ with st.expander("📥 **Upload Custom Order File(s) (.xlsx, .csv)** - Click her
                     st.session_state.active_forecaster = new_f
                     names_str = ", ".join([f.name for f in top_files])
                     st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
-                    st.success(f"🎉 Active Input Dataset Updated! Loaded {len(new_f.clean_df):,} records across {new_f.clean_df['Product'].nunique()} medicines. All predictions updated!")
+                    st.session_state.active_tab = "📊 Executive Overview"
+                    st.session_state.show_upload_success_alert = True
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error parsing uploaded order file: {e}")
@@ -309,7 +310,8 @@ with tab_up:
                     st.session_state.active_forecaster = new_f
                     names_str = ", ".join([f.name for f in tab_files])
                     st.session_state.active_dataset_label = f"Uploaded File: {names_str}"
-                    st.success(f"🎉 Active Input Dataset Updated! Loaded {len(new_f.clean_df):,} records across {new_f.clean_df['Product'].nunique()} medicines. All predictions updated!")
+                    st.session_state.active_tab = "📊 Executive Overview"
+                    st.session_state.show_upload_success_alert = True
                     st.rerun()
                 except Exception as e:
                     st.error(f"Failed to parse order file: {e}")
@@ -318,6 +320,9 @@ with tab_up:
 
 # --- TAB 1: EXECUTIVE OVERVIEW ---
 with tab1:
+    if st.session_state.get('show_upload_success_alert', False):
+        st.success(f"🎉 **Active Dataset Input Updated!** Loaded **{len(forecaster.clean_df):,}** order records across **{forecaster.clean_df['Product'].nunique()}** medicines. All executive metrics, charts, and forecasts below are now recalculated for your file!")
+        st.session_state.show_upload_success_alert = False
     # 4 Key Glass Metric Cards
     c1, c2, c3, c4 = st.columns(4)
     
