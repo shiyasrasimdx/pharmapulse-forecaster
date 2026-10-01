@@ -165,19 +165,13 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Custom Dataset Upload
-uploaded_file = st.sidebar.file_uploader("Upload Custom Dataset (.xlsx, .csv)", type=["xlsx", "xls", "csv"])
-if uploaded_file is not None:
+# Custom Dataset Upload (Supports Multiple Medical Shop Order Files)
+uploaded_files = st.sidebar.file_uploader("Upload Medical Shop Datasets (.xlsx, .csv)", type=["xlsx", "xls", "csv"], accept_multiple_files=True)
+if uploaded_files:
     try:
-        if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file)
-        else:
-            xl = pd.ExcelFile(uploaded_file)
-            sheet = 'Sheet2' if 'Sheet2' in xl.sheet_names else xl.sheet_names[0]
-            df = xl.parse(sheet)
         forecaster = MedicineForecaster()
-        forecaster.load_data(df)
-        st.sidebar.success(f"Loaded {len(forecaster.clean_df)} records!")
+        forecaster.load_data(uploaded_files)
+        st.sidebar.success(f"✅ Loaded & aggregated {len(uploaded_files)} shop datasets ({len(forecaster.clean_df):,} total sales records)!")
     except Exception as e:
         st.sidebar.error(f"Upload error: {e}")
 

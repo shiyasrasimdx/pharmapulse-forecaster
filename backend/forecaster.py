@@ -13,12 +13,61 @@ class MedicineForecaster:
             self.load_data(df)
 
     def load_data(self, df_or_filepath):
-        """Loads and normalizes dataset from DataFrame or Excel/CSV filepath."""
+        """Loads and normalizes dataset from single or multiple Excel/CSV files/DataFrames."""
+        if isinstance(df_or_filepath, list):
+            cleaned_dfs = []
+            for idx, item in enumerate(df_or_filepath):
+                shop_label = f"Shop_{idx+1}"
+                if hasattr(item, 'name'):
+                    shop_label = item.name.split('.')[0]
+                elif isinstance(item, str):
+                    shop_label = os.path.basename(item).split('.')[0]
+
+                try:
+                    if isinstance(item, str):
+                        if item.endswith('.csv'):
+                            raw = pd.read_csv(item)
+                        else:
+                            xl = pd.ExcelFile(item)
+                            sheet_name = 'Sheet2' if 'Sheet2' in xl.sheet_names else xl.sheet_names[0]
+                            raw = xl.parse(sheet_name)
+                    elif hasattr(item, 'read'): # Streamlit UploadedFile object
+                        if getattr(item, 'name', '').endswith('.csv'):
+                            raw = pd.read_csv(item)
+                        else:
+                            xl = pd.ExcelFile(item)
+                            sheet_name = 'Sheet2' if 'Sheet2' in xl.sheet_names else xl.sheet_names[0]
+                            raw = xl.parse(sheet_name)
+                    elif isinstance(item, pd.DataFrame):
+                        raw = item.copy()
+                    else:
+                        continue
+                    
+                    c_df = self._clean_and_structure_data(raw)
+                    if not c_df.empty:
+                        c_df['Shop_ID'] = shop_label
+                        cleaned_dfs.append(c_df)
+                except Exception as e:
+                    print(f"Error parsing file {item}: {e}")
+
+            if cleaned_dfs:
+                self.clean_df = pd.concat(cleaned_dfs, ignore_index=True)
+            else:
+                self.clean_df = pd.DataFrame(columns=['Date', 'Product', 'Qty', 'Value', 'Shop_ID'])
+            return self.clean_df
+
+        # Single source processing
         if isinstance(df_or_filepath, str):
             if df_or_filepath.endswith('.csv'):
                 df = pd.read_csv(df_or_filepath)
             else:
-                # Excel file parsing
+                xl = pd.ExcelFile(df_or_filepath)
+                sheet_name = 'Sheet2' if 'Sheet2' in xl.sheet_names else xl.sheet_names[0]
+                df = xl.parse(sheet_name)
+        elif hasattr(df_or_filepath, 'read'):
+            if getattr(df_or_filepath, 'name', '').endswith('.csv'):
+                df = pd.read_csv(df_or_filepath)
+            else:
                 xl = pd.ExcelFile(df_or_filepath)
                 sheet_name = 'Sheet2' if 'Sheet2' in xl.sheet_names else xl.sheet_names[0]
                 df = xl.parse(sheet_name)
