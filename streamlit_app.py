@@ -232,8 +232,49 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# Main Page Order File Upload Box (Always visible on main dashboard)
+with st.expander("📥 **Upload Custom Order File(s) (.xlsx, .csv)** - Click here to upload & switch active order dataset", expanded=False):
+    main_files = st.file_uploader(
+        "Select Order File(s) from Medical Shops",
+        type=["xlsx", "xls", "csv"],
+        accept_multiple_files=True,
+        key="top_main_uploader",
+        help="Upload order registers from retail medical shops (.xlsx, .csv) to use as forecasting input dataset."
+    )
+    if main_files:
+        try:
+            forecaster = MedicineForecaster()
+            forecaster.load_data(main_files)
+            st.success(f"✅ Active Input Switched: Loaded {len(main_files)} Order File(s) ({len(forecaster.clean_df):,} records)!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error parsing uploaded order file: {e}")
+
 # Tab Layout
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Executive Overview", "📈 Medicine Deep-Dive", "🛒 Procurement Planner", "⚡ What-If Simulator"])
+tab1, tab_up, tab2, tab3, tab4 = st.tabs(["📊 Executive Overview", "📥 Upload Order Files", "📈 Medicine Deep-Dive", "🛒 Procurement Planner", "⚡ What-If Simulator"])
+
+# --- TAB: UPLOAD ORDER FILES ---
+with tab_up:
+    st.markdown("### 📥 Upload Pharmacy / Hospital Order Registers")
+    st.markdown("""
+    Upload single or multiple order history files (`.xlsx`, `.csv`) directly into the AI forecasting engine.
+    The system automatically extracts transaction dates, medicine descriptions, quantities, and sales values.
+    """)
+    
+    upload_files_tab = st.file_uploader(
+        "Drag and drop your Excel / CSV order registers here:",
+        type=["xlsx", "xls", "csv"],
+        accept_multiple_files=True,
+        key="tab_main_uploader"
+    )
+    if upload_files_tab:
+        try:
+            forecaster = MedicineForecaster()
+            forecaster.load_data(upload_files_tab)
+            st.success(f"🎉 Successfully ingested {len(upload_files_tab)} order file(s) with {len(forecaster.clean_df):,} transaction records across {forecaster.clean_df['Product'].nunique()} medicines!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Failed to parse order file: {e}")
 
 # --- TAB 1: EXECUTIVE OVERVIEW ---
 with tab1:
